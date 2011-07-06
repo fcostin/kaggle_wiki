@@ -1,0 +1,12 @@
+optimism man!
+
+so my first attempt was worse than the "disregard input, guess 0" benchmark - trololol.
+
+check out the predict folder for stuff related to the first attempt. notably:
+	rf_predict_uniproc.r : attempt to train randomForests to usr_edits_per_5month.csv
+	fmt_predictions.py : converts rf_predict_uniproc.r output into submittable form
+
+other than that, the most useful thing is probably:
+	count_edits_per_month.py : crunches & outputs to usr_edits_per_month.npy
+
+there's some plotting scripts and other crud lying around which might be worth playing with
