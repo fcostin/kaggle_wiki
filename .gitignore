@@ -1,0 +1,6 @@
+*.swp
+*.pyc
+*~
+data/*
+training_sample.csv
+training_sample.pickle

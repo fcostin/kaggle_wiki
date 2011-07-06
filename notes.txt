@@ -1,0 +1,11 @@
+number of lines:
+	22,126,032 data/training.tsv
+
+from 0.01x sample of data:
+
+	namespace 0 : count 152266
+	namespace 1 : count 22065
+	namespace 2 : count 9268
+	namespace 3 : count 23423
+	namespace 4 : count 13627
+	namespace 5 : count 3018
