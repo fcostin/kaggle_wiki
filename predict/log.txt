@@ -1,0 +1,56 @@
+# here's the output from a typical run:
+
+[1] "reading the data"
+[1] "n_usrs : 44514, n_months : 23"
+[1] "thinning rows down to 1.000"
+[1] "making thinned training set"
+[1] "making thinned test set"
+[1] "training random forest"
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+  10 |    1.306    56.10 |
+  20 |    1.246    53.51 |
+  30 |    1.225    52.63 |
+  40 |    1.218    52.31 |
+  50 |    1.211    52.02 |
+[1] "error on thinned training set: 0.933"
+[1] "error on thinned test set: 1.218"
+[1] "making full training set"
+[1] "making full test set"
+[1] "error on full training set: 0.933"
+[1] "error on full test set: 1.218"
+[1] "making full production training set"
+[1] "making full production test inputs (n.b. no outputs known)"
+[1] "retraining model on production training data"
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+  10 |     1.22    50.40 |
+  20 |    1.143    47.22 |
+  30 |    1.123    46.38 |
+  40 |    1.113    45.95 |
+  50 |    1.105    45.62 |
+[1] "error on full production training set: 0.847"
+[1] "making prediction on production inputs, saving to disk"
+[1] "fin."
+
+
+# 1. from the first set of training / test errors we see:
+#	train error 0.933
+#	test error 1.218
+# assuming some multiplicative relationship yield a factor of
+# rho = test error / train error = 1.305
+# when extending training errors to test errors,
+# where training data is same as test data but misses
+# most recent 5 months of data
+
+# 2. from the second training errors (production run)
+# we see the training error as 0.847.
+# multiplying that with the rho from previously suggests
+# the error we'll see when we submit is about 1.106
+# On the other hand, by looking at the random forest OOB error
+# estimate, we see 1.105, which is consistent.
+
+# 3. when this model was actually submitted (after ORDERING wrt. USER)
+# we obtained an error of:
+#		0.996263
+# which is substantially lower than both estimates !

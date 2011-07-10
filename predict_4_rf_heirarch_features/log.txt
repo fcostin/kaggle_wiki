@@ -1,0 +1,131 @@
+# attempt 1
+# train : shift 40
+# test : shift 20
+# feature params:
+#	min depth 2
+#	max depth 8
+
+[1] "reading training data"
+[1] "reading test data"
+[1] "n_usrs : 44514, n_inputs : 127"
+[1] "training random forest"
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+  10 |    1.127    49.36 |
+  20 |    1.054    46.17 |
+  30 |    1.029    45.08 |
+  40 |    1.018    44.60 |
+  50 |    1.012    44.32 |
+[1] "error on training set: 0.794"
+[1] "error on test set: 1.126"
+
+# attempt 2
+# train : shift 40
+# test : shift 20
+# feature params:
+#	min depth 3
+#	max depth 8
+
+[1] "reading training data"
+[1] "reading test data"
+[1] "n_usrs : 44514, n_inputs : 63"
+[1] "training random forest"
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+  10 |    1.123    49.20 |
+  20 |    1.051    46.06 |
+  30 |    1.033    45.26 |
+  40 |    1.022    44.76 |
+  50 |    1.016    44.50 |
+[1] "error on training set: 0.806"
+[1] "error on test set: 1.139"
+
+# attempt 3
+# train : shift 40
+# test : shift 20
+# feature params:
+#	min depth 1
+#	max depth 8
+
+[1] "reading training data"
+[1] "reading test data"
+[1] "n_usrs : 44514, n_inputs : 255"
+[1] "training random forest"
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+  10 |    1.122    49.14 |
+  20 |    1.043    45.68 |
+  30 |    1.021    44.74 |
+  40 |    1.011    44.32 |
+  50 |    1.005    44.03 |
+[1] "error on training set: 0.785"
+[1] "error on test set: 1.122"
+
+# attempt 4
+# train : shift 40
+# test : shift 20
+# feature params:
+#	min depth 0
+#	max depth 8
+
+ERROR : ran out of core memory (pkilled it to avoid thrashing awfulness)
+
+# attempt 5
+# train : shift 20
+# test : shift 0
+# feature params:
+#	min depth 2
+#	max depth 8
+
+[1] "reading training data"
+[1] "reading test data"
+[1] "n_usrs : 44514, n_inputs : 127"
+[1] "training random forest"
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+  10 |     1.26    55.31 |
+  20 |    1.169    51.31 |
+  30 |    1.143    50.15 |
+  40 |    1.132    49.67 |
+  50 |    1.124    49.35 |
+[1] "error on training set: 0.826"
+[1] "error on test set: 1.134"
+
+# production attempt 5
+# train : shift 0
+# test : production (no response values present)
+# feature params:
+#	min depth 2
+#	max depth 8
+
+[1] "reading training data"
+[1] "reading production input data (n.b. no response col)"
+[1] "n_usrs : 44514, n_inputs : 127"
+[1] "training random forest: 150 trees over 2 procs"
+     |      Out-of-bag        |      Out-of-bag   |
+|
+Tree |      MSE  %Var(y) Tree |      MSE  %Var(y) |
+|
+  10 |    1.125    47.73 |
+  10 |     1.13    47.93 |
+  20 |    1.032    43.78 |
+  20 |    1.031    43.74 |
+  30 |    1.002    42.51 |
+  30 |    1.002    42.49 |
+  40 |   0.9916    42.06 |
+  40 |   0.9893    41.96 |
+  50 |   0.9829    41.69 |
+  50 |   0.9827    41.68 |
+  60 |   0.9786    41.51 |
+  60 |   0.9792    41.53 |
+  70 |   0.9758    41.39 |
+  70 |    0.975    41.35 |
+[1] "error on training set: 0.696"
+[1] "predicting on production input data"
+[1] "saving to \"predictions.csv\""
+[1] "fin."
+
+real	14m52.484s
+user	14m47.103s
+sys	0m2.208s
+
