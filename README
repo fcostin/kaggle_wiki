@@ -1,3 +1,16 @@
-simple pipeline for predicting using random forest
+Simple pipeline for predicting using random forest. Multicore support.
 
-see Rakefile for the top-level low-down on how it's all glued together.
+Dependencies:
+	python
+		numpy
+	R
+		randomForest
+		foreach
+		doMC
+	rake
+
+To do it live:
+
+	$ rake
+
+See the Rakefile for the top-level low-down on how it's all glued together.
