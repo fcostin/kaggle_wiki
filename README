@@ -1,0 +1,3 @@
+simple pipeline for predicting using random forest
+
+see Rakefile for the top-level low-down on how it's all glued together.
