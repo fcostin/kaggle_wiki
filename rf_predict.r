@@ -47,7 +47,7 @@ save_predictions <- function(predictions, row_names, file_name) {
 	cat(sprintf('saving predictions to "%s"\n', file_name))
 	df <- data.frame(y = predictions)
 	rownames(df) <- row_names
-	write.table(df, 'predictions.csv', sep = ',')
+	write.table(df, file_name, sep = ',')
 }
 
 main <- function() {

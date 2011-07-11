@@ -17,13 +17,12 @@ def main():
         count = float(row[-1])
         assert numpy.isfinite(count) and count >= 0.0
         predicted_counts.append(count)
-
+    
+    print 'saving correctly formatted predictions to "%s"' % sys.argv[2]
     pred_out = csv.writer(open(sys.argv[2], 'w'), delimiter = ',')
     header = ['user_id', 'count']
     pred_out.writerow(header)
-
     sorted_usr_ids = sorted(map(int, usr_to_index.keys()))
-
     for usr_id in sorted_usr_ids:
         count = predicted_counts[usr_to_index[usr_id]]
         pred_out.writerow([usr_id, count])
