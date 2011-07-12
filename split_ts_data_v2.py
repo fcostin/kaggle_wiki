@@ -45,7 +45,7 @@ def make_input_features(data, bcount, y = None):
             y[:, numpy.newaxis],
         ))
         header.append('y')
-    return numpy.hstack((bcount, first_ed, last_ed)), header
+    return features, header
 
 def main():
     data_file_name = sys.argv[1]
@@ -73,7 +73,8 @@ def main():
         out_test_inputs_file_name : (test_features, test_header),
     }
     for out_file, (features, header) in outputs.iteritems():
-        with open(out_file) as f:
+        with open(out_file, 'w') as f:
+            print 'Writing shape %s features to "%s"' % (features.shape, out_file)
             writer = csv.writer(f, delimiter = ',')
             writer.writerow(header)
             for row in features:
