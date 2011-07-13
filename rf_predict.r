@@ -12,15 +12,6 @@ parse_args <- function() {
 	return(res)
 }
 
-
-phi <- function(x) {
-	log(1.0 + x)
-}
-
-phi_inv <- function(x) {
-	exp(x) - 1.0
-}
-
 load_inputs <- function(inputs_file_name) {
 	cat(sprintf('reading input data from "%s"\n', inputs_file_name))
 	d_inputs <- read.table(inputs_file_name, header = TRUE, sep = ',')
@@ -40,7 +31,7 @@ load_forest <- function(forest_file_name) {
 }
 
 compute_predictions <- function(rf, inputs) {
-	return(phi_inv(predict(rf, phi(inputs))))
+	return(predict(rf, inputs))
 }
 
 save_predictions <- function(predictions, row_names, file_name) {

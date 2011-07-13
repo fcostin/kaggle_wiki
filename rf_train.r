@@ -28,8 +28,8 @@ train_rf <- function(forest_args) {
 	n_inputs <- ncol(d_train) - 1
 	print(sprintf("n_usrs : %d, n_inputs : %d", n_usrs, n_inputs))
 	
-	# preprocess all input & output cols (of counts) with phi transform
-	d_train <- phi(d_train)
+	# preprocess response col (of counts) with phi transform
+	d_train[, ncol(d_train)] <- phi(d_train[, ncol(d_train)])
 
 	n_procs <- forest_args[['n_procs']]
 	n_trees <- forest_args[['n_trees']]
