@@ -1,5 +1,9 @@
 library(randomForest)
 
+phi_inv <- function(x) {
+	exp(x) - 1.0
+}
+
 parse_args <- function() {
 	argv <- commandArgs(trailingOnly = TRUE)
 	if (length(argv) != 3) {
@@ -31,7 +35,7 @@ load_forest <- function(forest_file_name) {
 }
 
 compute_predictions <- function(rf, inputs) {
-	return(predict(rf, inputs))
+	return(phi_inv(predict(rf, inputs)))
 }
 
 save_predictions <- function(predictions, row_names, file_name) {
