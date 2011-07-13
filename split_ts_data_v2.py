@@ -2,6 +2,9 @@ import csv
 import numpy
 import sys
 
+SAMPLING_INTERVAL_WEEK = 451 # XXX this is approximately around 1st Sept 2009
+MAX_RELEVANT_BLOCKS = 14 # XXX arbitrary
+
 def blocked_counts(data, b):
     """
     b : block size
@@ -26,28 +29,50 @@ def first_edit_time(data):
 def last_edit_time(data):
     return numpy.argmax(numpy.add.accumulate(data, axis = 1), axis = 1)
 
+def mean_edits_since_first(data, first_edit_index):
+    acc = numpy.add.accumulate(data, axis = 1)
+    n_edits_since_first = []
+    for i in xrange(data.shape[0]):
+        # add 1 as to include the first edit too
+        n_edits_since_first.append(
+            acc[i, -1] - acc[i, first_edit_index[i]] + 1
+        )
+    n_edits_since_first = numpy.asarray(n_edits_since_first)
+    now_index = data.shape[1]
+    return (1.0 / (now_index - first_edit_index)) * n_edits_since_first
+
 def make_input_features(data, bcount, y = None, t_offset = 0):
-    first_ed = first_edit_time(data) + t_offset
-    last_ed = last_edit_time(data) + t_offset
+    first_ed_index = first_edit_time(data)
+    last_ed_index = last_edit_time(data)
+    first_ed = first_ed_index + t_offset
+    last_ed = last_ed_index + t_offset
+    new_user = first_ed > SAMPLING_INTERVAL_WEEK
+    edit_rate = mean_edits_since_first(data, first_ed_index)
+    
+    # hack : ignore blocks from pre-history
+    bcount = bcount[:, -MAX_RELEVANT_BLOCKS:]
     n = bcount.shape[1]
-    header = ['b_%d' % i for i in xrange(n)] + ['first_ed', 'last_ed']
-    if y is None:
-        features = numpy.hstack((
-            bcount,
-            first_ed[:, numpy.newaxis],
-            last_ed[:, numpy.newaxis],
-        ))
-    else:
-        features = numpy.hstack((
-            bcount,
-            first_ed[:, numpy.newaxis],
-            last_ed[:, numpy.newaxis],
-            y[:, numpy.newaxis],
-        ))
+    header = (
+        ['b_%d' % i for i in xrange(n)] +
+        ['first_ed', 'last_ed', 'new_user', 'edit_rate']
+    )
+    features = [
+        bcount,
+        first_ed[:, numpy.newaxis],
+        last_ed[:, numpy.newaxis],
+        new_user[:, numpy.newaxis],
+        edit_rate[:, numpy.newaxis],
+    ]
+    if y is not None:
+        features.append(y[:, numpy.newaxis])
         header.append('y')
+    features = numpy.hstack(features)
     return features, header
 
 def main():
+    if len(sys.argv) != 4:
+        print 'usage: data_file_name out_training_file_name out_test_inputs_file_name'
+        sys.exit(1)
     data_file_name = sys.argv[1]
     out_training_file_name = sys.argv[2]
     out_test_inputs_file_name = sys.argv[3]
