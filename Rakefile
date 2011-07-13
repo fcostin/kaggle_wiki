@@ -20,7 +20,7 @@ end
 # most time intensive.
 file "gen/forest.rdata" => ["rf_train.r", "gen/training.csv"] do
 	n_procs = 2 # how many cores do we have to play with?
-	n_trees = 50 # how many trees do we want in total
+	n_trees = 100 # how many trees do we want in total
 	if n_trees % n_procs != 0
 		abort("n_procs (#{n_procs}) does not divide n_trees (#{n_trees})")
 	end
@@ -36,6 +36,11 @@ end
 # (i.e. proper user ids in first col, rows sorted wrt user ids, header)
 file "gen/predictions.csv" => ["fmt_predictions.py", "gen/raw_predictions.csv"] do
 	sh "python fmt_predictions.py gen/raw_predictions.csv gen/predictions.csv"
+end
+
+task :clean do
+	sh "rm -fv gen/*.csv"
+	sh "rm -fv gen/forest.rdata"
 end
 
 task :default => "gen/predictions.csv"

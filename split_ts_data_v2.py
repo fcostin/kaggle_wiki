@@ -26,9 +26,9 @@ def first_edit_time(data):
 def last_edit_time(data):
     return numpy.argmax(numpy.add.accumulate(data, axis = 1), axis = 1)
 
-def make_input_features(data, bcount, y = None):
-    first_ed = first_edit_time(data)
-    last_ed = last_edit_time(data)
+def make_input_features(data, bcount, y = None, t_offset = 0):
+    first_ed = first_edit_time(data) + t_offset
+    last_ed = last_edit_time(data) + t_offset
     n = bcount.shape[1]
     header = ['b_%d' % i for i in xrange(n)] + ['first_ed', 'last_ed']
     if y is None:
@@ -66,6 +66,7 @@ def main():
     test_features, test_header = make_input_features(
         data[:, b:],
         bcount[:, 1:],
+        t_offset = b,
     )
 
     outputs = {
