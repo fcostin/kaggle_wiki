@@ -20,7 +20,7 @@ end
 # most time intensive.
 file "gen/forest.rdata" => ["rf_train.r", "gen/training.csv"] do
 	n_procs = 2 # how many cores do we have to play with?
-	n_trees = 100 # how many trees do we want in total
+	n_trees = 1200 # how many trees do we want in total
 	if n_trees % n_procs != 0
 		abort("n_procs (#{n_procs}) does not divide n_trees (#{n_trees})")
 	end

@@ -47,6 +47,8 @@ train_rf <- function(forest_args) {
 			d_train[, n_inputs + 1],
 			ntree = trees_per_proc,
 			do.trace = 10,
+			nodesize = 100, # XXX experimental default for regression is 5
+			replace = FALSE, # XXX experimental default is TRUE
 			importance = TRUE
 		)
 	}
