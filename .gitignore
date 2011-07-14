@@ -6,3 +6,4 @@
 # ignore generated csv & rdata files
 gen/*.csv
 gen/*.rdata
+gen/*.pdf

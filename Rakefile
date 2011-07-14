@@ -15,6 +15,18 @@ file "test_inputs.csv" => [INPUT_DATA_FILE, "split_ts_data.r"] do
 	sh "python split_ts_data_v2.py #{INPUT_DATA_FILE} gen/training.csv gen/test_inputs.csv"
 end
 
+# compute importance weights to approximately correct
+# for covariate shift between training and test population
+file "gen/importance_weights.csv" => ["cov_shift.r", "gen/training.csv", "gen/test_inputs.csv"] do
+	sh "Rscript cov_shift.r gen/training.csv gen/test_inputs.csv gen/importance_weights.csv"
+end
+
+# Train lasso regression model (use glmnet).
+# This is reweighted by the importance weights.
+file "gen/glmnet.rdata" => ["glmnet_train.r", "gen/training.csv", "gen/importance_weights.csv"] do
+	sh "Rscript glmnet_train.r gen/training.csv gen/test_inputs.csv gen/importance_weights.csv gen/glmnet.rdata"
+end
+
 # Train random forest (using multiple cores), then save
 # random forest representation to disk. This part is the
 # most time intensive.

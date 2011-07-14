@@ -22,7 +22,6 @@ parse_args <- function() {
 }
 
 dbg_save_cv_plot <- function(fit, plot_file_name) {
-	cv_file_name <- 'gen/dbg_cov_shift_glm_cv_plot.pdf'
 	cat(sprintf('saving CV curve to "%s"\n', cv_file_name))
 	pdf(cv_file_name)
 	plot(fit)
@@ -43,7 +42,7 @@ estimate_cov_shift_training_weights <- function(args) {
 	# drop actual target feature
 	d_train <- d_train[, 1:n_inputs]
 	d_train[['class']] <- -1 # tag to signify training population
-	cat(sprintf("n_usrs : %d, n_inputs : %d", n_usrs, n_inputs))
+	cat(sprintf("n_usrs : %d, n_inputs : %d\n", n_usrs, n_inputs))
 
 	cat(sprintf('reading test inputs from "%s"\n', args[['test_inputs_file_name']]))
 	d_test <- read.table(args[['test_inputs_file_name']], header = TRUE, sep = ',')
