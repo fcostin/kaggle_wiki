@@ -24,7 +24,12 @@ end
 # Train lasso regression model (use glmnet).
 # This is reweighted by the importance weights.
 file "gen/glmnet.rdata" => ["glmnet_train.r", "gen/training.csv", "gen/importance_weights.csv"] do
-	sh "Rscript glmnet_train.r gen/training.csv gen/test_inputs.csv gen/importance_weights.csv gen/glmnet.rdata"
+	sh "Rscript glmnet_train.r gen/training.csv gen/importance_weights.csv gen/glmnet.rdata"
+end
+
+# Load lasso regression model from disk, predict on test input data
+file "gen/raw_glmnet_predictions.csv" => ["glmnet_predict.r", "gen/glmnet.rdata", "gen/test_inputs.csv"] do
+	sh "Rscript glmnet_predict.r gen/glmnet.rdata gen/test_inputs.csv gen/raw_glmnet_predictions.csv"
 end
 
 # Train random forest (using multiple cores), then save
@@ -48,6 +53,12 @@ end
 # (i.e. proper user ids in first col, rows sorted wrt user ids, header)
 file "gen/predictions.csv" => ["fmt_predictions.py", "gen/raw_predictions.csv"] do
 	sh "python fmt_predictions.py gen/raw_predictions.csv gen/predictions.csv"
+end
+
+# Format the raw predictions to properly match the format expected by kaggle
+# (i.e. proper user ids in first col, rows sorted wrt user ids, header)
+file "gen/glmnet_predictions.csv" => ["fmt_predictions.py", "gen/raw_glmnet_predictions.csv"] do
+	sh "python fmt_predictions.py gen/raw_glmnet_predictions.csv gen/glmnet_predictions.csv"
 end
 
 task :clean do
