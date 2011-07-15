@@ -25,7 +25,10 @@ phi <- function(x) {
 
 save_glmnet <- function(glmnet, out_file_name) {
 	cat(sprintf('saving glmnet model to file "%s"\n', out_file_name))
-	save('glmnet', file = out_file_name, compress = TRUE)
+	# direct save() on glmnet is broken (unsupported i guess)
+	# so extract lm coeffs and save those
+	glmnet_coeffs <- predict(glmnet, type = "coefficients")
+	save('glmnet_coeffs', file = out_file_name, compress = TRUE)
 }
 
 fit_glmnet_lasso <- function(args) {
@@ -71,7 +74,7 @@ fit_glmnet_lasso <- function(args) {
 main <- function() {
 	args <- parse_args()
 	fit <- fit_glmnet_lasso(args)
-	save_glmnet(fit, args[['out_glmnet']])
+	save_glmnet(fit, args[['out_file_name']])
 }
 
 main()
