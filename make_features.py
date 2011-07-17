@@ -41,10 +41,11 @@ def mean_edits_since_first(data, first_edit_index):
     now_index = data.shape[1]
     return (1.0 / (now_index - first_edit_index)) * n_edits_since_first
 
-def make_input_features(data, bcount, bdelta, y = None, t_offset = 0):
+def make_input_features(data, b, bcount, bdelta, y = None, t_offset = 0):
     """
     arguments:
         data : weekly edit counts, as array of shape (n_usrs, n_weeks)
+        b : block size (int)
         bcount : blocked edit counts, as array of shape (n_usrs, n_blocks)
         bdelta : blocked net edit |delta|, as array of shape (n_usrs, n_blocks)
         y : response vector (optional)
@@ -60,18 +61,25 @@ def make_input_features(data, bcount, bdelta, y = None, t_offset = 0):
     new_user = first_ed > SAMPLING_INTERVAL_WEEK
     edit_rate = mean_edits_since_first(data, first_ed_index)
     
-    # hack : ignore blocks from pre-history
+    fine_b = 4
+    assert b % fine_b == 0
+    n_fine = b / fine_b
+    count_fine = blocked_counts(data[:, -b:], fine_b)
+
+    # ignore blocks from pre-history
     bcount = bcount[:, -MAX_RELEVANT_BLOCKS:]
     bdelta = bdelta[:, -MAX_RELEVANT_BLOCKS:]
     n = bcount.shape[1]
     header = (
-        ['count_%d' % i for i in xrange(n)] +
-        ['delta_%d' % i for i in xrange(n)] +
+        ['block_count_%02d' % i for i in xrange(n)] +
+        ['block_delta_%02d' % i for i in xrange(n)] +
+        ['fine_count_%02d_%02d' % (n-1, i) for i in xrange(n_fine)] +
         ['first_ed', 'last_ed', 'is_new_user', 'edit_rate']
     )
     features = [
         bcount,
         bdelta,
+        count_fine,
         first_ed[:, numpy.newaxis],
         last_ed[:, numpy.newaxis],
         new_user[:, numpy.newaxis],
@@ -101,12 +109,14 @@ def main():
 
     train_features, train_header = make_input_features(
         data[:, :-b],
+        b,
         bcount = bcount[:, :-1],
         bdelta = bdelta[:, :-1],
         y = bcount[:, -1]
     )
     test_features, test_header = make_input_features(
         data[:, b:],
+        b,
         bcount = bcount[:, 1:],
         bdelta = bdelta[:, :-1],
         t_offset = b,
