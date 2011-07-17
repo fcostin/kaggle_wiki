@@ -54,9 +54,6 @@ train_rf <- function(forest_args) {
 	}
 	mse_imp <- importance(rf, type = 1, scale = FALSE)
 	print(mse_imp)
-	y_train_pred <- predict(rf, d_train[, 1:n_inputs])
-	r_train <- (sum((d_train[, n_inputs + 1] - y_train_pred) ** 2) / n_usrs) ** 0.5
-	cat(sprintf('error on training set: %.3f\n', r_train))
 	return(rf)
 
 }
