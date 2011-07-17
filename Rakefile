@@ -3,16 +3,32 @@
 #
 # Produces the result "predictions.csv"
 
-INPUT_DATA_FILE = "data/usr_edits_per_week.npy"
+INPUT_WEEKLY_COUNTS = "data/usr_edits_per_week.npy"
+INPUT_WEEKLY_ABS_DELTA = "data/usr_abs_delta_per_week.npy"
 
 # Split input data into training and test data files
 # (expressed as two tasks, if one of these is run then
 # both outputs will be generated)
-file "gen/training.csv" => [INPUT_DATA_FILE, "split_ts_data.r"] do
-	sh "python split_ts_data_v2.py #{INPUT_DATA_FILE} gen/training.csv gen/test_inputs.csv"
+file "gen/training.csv" => [INPUT_WEEKLY_COUNTS, INPUT_WEEKLY_ABS_DELTA, "make_features.py"] do
+	cmd = [
+		"python make_features.py",
+		INPUT_WEEKLY_COUNTS,
+		INPUT_WEEKLY_ABS_DELTA,
+		"gen/training.csv",
+		"gen/test_inputs.csv",
+	]
+	sh cmd.join(" ")
 end
-file "test_inputs.csv" => [INPUT_DATA_FILE, "split_ts_data.r"] do
-	sh "python split_ts_data_v2.py #{INPUT_DATA_FILE} gen/training.csv gen/test_inputs.csv"
+
+file "gen/test_inputs.csv" => [INPUT_WEEKLY_COUNTS, INPUT_WEEKLY_ABS_DELTA, "make_features.py"] do
+	cmd = [
+		"python make_features.py",
+		INPUT_WEEKLY_COUNTS,
+		INPUT_WEEKLY_ABS_DELTA,
+		"gen/training.csv",
+		"gen/test_inputs.csv",
+	]
+	sh cmd.join(" ")
 end
 
 # compute importance weights to approximately correct
@@ -64,6 +80,7 @@ end
 task :clean do
 	sh "rm -fv gen/*.csv"
 	sh "rm -fv gen/forest.rdata"
+	sh "rm -fv gen/glmnet.rdata"
 end
 
 task :default => "gen/predictions.csv"

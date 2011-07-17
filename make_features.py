@@ -41,7 +41,18 @@ def mean_edits_since_first(data, first_edit_index):
     now_index = data.shape[1]
     return (1.0 / (now_index - first_edit_index)) * n_edits_since_first
 
-def make_input_features(data, bcount, y = None, t_offset = 0):
+def make_input_features(data, bcount, bdelta, y = None, t_offset = 0):
+    """
+    arguments:
+        data : weekly edit counts, as array of shape (n_usrs, n_weeks)
+        bcount : blocked edit counts, as array of shape (n_usrs, n_blocks)
+        bdelta : blocked net edit |delta|, as array of shape (n_usrs, n_blocks)
+        y : response vector (optional)
+        t_offset : time origin of this data (integer, in weeks)
+            used to synch up time values between different offset data sets
+    returns:
+        features, header
+    """
     first_ed_index = first_edit_time(data)
     last_ed_index = last_edit_time(data)
     first_ed = first_ed_index + t_offset
@@ -51,13 +62,16 @@ def make_input_features(data, bcount, y = None, t_offset = 0):
     
     # hack : ignore blocks from pre-history
     bcount = bcount[:, -MAX_RELEVANT_BLOCKS:]
+    bdelta = bdelta[:, -MAX_RELEVANT_BLOCKS:]
     n = bcount.shape[1]
     header = (
-        ['b_%d' % i for i in xrange(n)] +
-        ['first_ed', 'last_ed', 'new_user', 'edit_rate']
+        ['count_%d' % i for i in xrange(n)] +
+        ['delta_%d' % i for i in xrange(n)] +
+        ['first_ed', 'last_ed', 'is_new_user', 'edit_rate']
     )
     features = [
         bcount,
+        bdelta,
         first_ed[:, numpy.newaxis],
         last_ed[:, numpy.newaxis],
         new_user[:, numpy.newaxis],
@@ -70,27 +84,31 @@ def make_input_features(data, bcount, y = None, t_offset = 0):
     return features, header
 
 def main():
-    if len(sys.argv) != 4:
-        print 'usage: data_file_name out_training_file_name out_test_inputs_file_name'
+    if len(sys.argv) != 5:
+        print 'usage: weekly_count_data weekly_delta_data out_training out_test_inputs'
         sys.exit(1)
     data_file_name = sys.argv[1]
-    out_training_file_name = sys.argv[2]
-    out_test_inputs_file_name = sys.argv[3]
+    delta_data_file_name = sys.argv[2]
+    out_training_file_name = sys.argv[3]
+    out_test_inputs_file_name = sys.argv[4]
 
     data = numpy.load(data_file_name)
+    delta_data = numpy.load(delta_data_file_name)
     b = 20
 
     bcount = blocked_counts(data, b)
-    train_bcount_x = bcount[:, :-1]
-    train_bcount_y = bcount[:, -1]
+    bdelta = blocked_counts(delta_data, b)
+
     train_features, train_header = make_input_features(
         data[:, :-b],
-        train_bcount_x,
-        train_bcount_y,
+        bcount = bcount[:, :-1],
+        bdelta = bdelta[:, :-1],
+        y = bcount[:, -1]
     )
     test_features, test_header = make_input_features(
         data[:, b:],
-        bcount[:, 1:],
+        bcount = bcount[:, 1:],
+        bdelta = bdelta[:, :-1],
         t_offset = b,
     )
 
