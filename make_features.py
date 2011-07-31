@@ -4,6 +4,7 @@ import sys
 
 SAMPLING_INTERVAL_WEEK = 451 # XXX this is approximately around 1st Sept 2009
 MAX_RELEVANT_BLOCKS = 14 # XXX arbitrary
+SAMPLING_INTERVAL_WIDTH = 52
 
 def blocked_counts(data, b):
     """
@@ -102,23 +103,29 @@ def main():
 
     data = numpy.load(data_file_name)
     delta_data = numpy.load(delta_data_file_name)
+
+    # block size, in weeks
     b = 20
+
+    # XXX figure out correct row masks to attempt to correct for awful sampling issues in dataset
+    train_mask = first_edit_time(data[:, -SAMPLING_INTERVAL_WIDTH:]) < (SAMPLING_INTERVAL_WIDTH - b)
+    test_mask = numpy.ones(data.shape[0], dtype = numpy.bool)
 
     bcount = blocked_counts(data, b)
     bdelta = blocked_counts(delta_data, b)
 
     train_features, train_header = make_input_features(
-        data[:, :-b],
+        data[train_mask, :-b],
         b,
-        bcount = bcount[:, :-1],
-        bdelta = bdelta[:, :-1],
-        y = bcount[:, -1]
+        bcount = bcount[train_mask, :-1],
+        bdelta = bdelta[train_mask, :-1],
+        y = bcount[train_mask, -1]
     )
     test_features, test_header = make_input_features(
-        data[:, b:],
+        data[test_mask, b:],
         b,
-        bcount = bcount[:, 1:],
-        bdelta = bdelta[:, :-1],
+        bcount = bcount[test_mask, 1:],
+        bdelta = bdelta[test_mask, :-1],
         t_offset = b,
     )
 
