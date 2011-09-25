@@ -1,16 +1,23 @@
-Simple pipeline for predicting using random forest. Multicore support.
+Submission to Wikipedia's Participation Challenge
+see: kaggle.com/c/wikichallenge/Leaderboard
 
-Dependencies:
-	python
-		numpy
-	R
-		randomForest
-		foreach
-		doMC
-	rake
+team: Optimism man!
+Reuben Fletcher-Costin & Philip Vitesnik
+25th Sept 2011
 
-To do it live:
 
-	$ rake
+[MAKING PREDICTIONS]
 
-See the Rakefile for the top-level low-down on how it's all glued together.
+To run, place the "training.tsv" file in the original_data/ directory, then type "rake".
+
+The complete procedure will probably take a couple of hours to complete.
+Most of this time will be spent constructing the two tables of count data from the
+training.tsv file.
+
+The resulting file of predictions is saved as the file "gen/predictions.csv"
+
+[DOCUMENTATION]
+
+type "rake doc" to build "doc/description.pdf"
+
+Read the Rakefile to see how the scripts are all glued together...
