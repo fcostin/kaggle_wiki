@@ -10,7 +10,7 @@
 task :default => "gen/predictions.csv"
 
 # compile the pdf documentation using latex
-task :doc => "description.pdf"
+task :doc => "doc/description.pdf"
 
 # delete all generated files, apart from the usr_to_index_map
 # and the *.npy count tables
@@ -135,17 +135,20 @@ end
 task :clean => :clean_predict
 
 
-file "description.pdf" => "description.tex" do
-	sh "pdflatex description.tex"
+file "doc/description.pdf" => "doc/description.tex" do
+	# repeat command twice to ensure references show up ...
+	sh "pdflatex --output-directory doc description.tex"
+	sh "pdflatex --output-directory doc description.tex"
 end
 
-task :clean_latex do
-	sh "rm -f description.log"
-	sh "rm -f description.out"
-	sh "rm -f description.aux"
-	sh "rm -f description.pdf"
+task :clean_doc do
+	sh "rm -f doc/description.log"
+	sh "rm -f doc/description.out"
+	sh "rm -f doc/description.aux"
+	sh "rm -f doc/description.pdf"
 end
+
+task :clean => :clean_doc
 
 task :clean_everything => [:clean, :clean_inputs]
 
-task :clean => :clean_latex
