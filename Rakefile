@@ -54,9 +54,24 @@ file "gen/predictions.csv" => ["fmt_predictions.py", "gen/raw_predictions.csv"] 
 	sh "python fmt_predictions.py gen/raw_predictions.csv gen/predictions.csv"
 end
 
-task :clean do
+task :clean_predict do
 	sh "rm -fv gen/*.csv"
 	sh "rm -fv gen/forest.rdata"
 end
 
-task :default => "gen/predictions.csv"
+task :clean => :clean_predict
+
+# task :default => "gen/predictions.csv"
+
+file "description.pdf" => "description.tex" do
+	sh "pdflatex description.tex"
+end
+
+task :clean_latex do
+	sh "rm -f description.log"
+	sh "rm -f description.out"
+	sh "rm -f description.aux"
+	sh "rm -f description.pdf"
+end
+
+task :clean => :clean_latex

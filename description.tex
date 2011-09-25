@@ -1,0 +1,233 @@
+\documentclass[12pt]{article}
+
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\title{Wikipedia Participation Challenge Entry}
+\author{rfc}
+
+\begin{document}
+\maketitle
+\section{Overview}
+
+Roughly, this approach could be described as `how well can we do using a random forest based on features derived from edit counts and edit deltas, without doing anything particularly insightful'? The implementation is structured as a sequence of the five stages:
+\begin{enumerate}
+	\item pre-processing the data to obtain arrays of count data
+	\item feature creation to define training and test data sets
+	\item training a random forest on the training data set
+	\item making predictions using the trained forest on the test data set
+	\item post processing of predictions
+\end{enumerate}
+
+\section{Grim Detail}
+
+\subsection{Pre-Processing the Data}
+
+\subsection{Note on Time Intervals}
+The way time is handled by the code is a little sloppy:
+\begin{itemize}
+	\item the finest time interval dealt with is the week.
+	\item months are assumed to always be four weeks.
+	\item the prediction interval is taken to be five months, i.e., twenty weeks.
+	In the code, these twenty week intervals are called \emph{blocks}.
+	\item four week time intervals are also referred to as \emph{fine blocks}.
+\end{itemize}
+
+\subsection{Feature Creation}
+
+The Python script \verb+make_features.py+ reads input data from the two
+files \verb+data/usr_edits_per_week.npy+, and \verb+data/usr_abs_delta_per_week.npy+,
+each of which is a NumPy array stored in NumPy's binary format.
+This script evaluates the features for both training \& test data sets, then writes
+these data sets to the files \verb+gen/training.csv+ \& \verb+gen/test_inputs.csv+ respectively. These two \verb+csv+ files are later used to train a random forest model \& make
+predictions.
+
+In detail, these the training and test \verb+csv+ files contain the following features, per user.
+
+\begin{itemize}
+	\item \verb+block_count_00+, \ldots, \verb+block_count_13+ :
+	The number of edits made by the user during each 20 week block, for the
+	14 most recent blocks. Blocks are numbered from the oldest, block $0$, to the
+	most recent, block $13$. The particular choice to use 14 blocks was 
+	somewhat arbitrary.
+
+	\item \verb+block_delta_00+, \ldots, \verb+block_delta_13+ :
+	The sum of the absolute values of the edit deltas made during each 20 week block.
+	Indexing convention is same as above.
+
+	\item \verb+fine_count_13_00+, \ldots, \verb+fine_count_13_04+ :
+	The number of edits made by the user during each 4 week fine block, for
+	the 5 fine blocks during the most recent 20 week block. Fine blocks are numbered from
+	the oldest, \verb+13_00+, to the most recent, \verb+13_04+.
+
+	\item \verb+first_ed+ : 
+	The index of the most recent week where the user made at least 1 edit.
+
+	\item \verb+last_ed+ :
+	The index of the oldest week where the user made at least 1 edit.
+
+	\item \verb+is_new_user+ :
+	Flag defined as \verb+first_ed > SAMPLING_INTERVAL_WEEK+, where
+	\verb+SAMPLING_INTERVAL_WEEK = 451+ corresponds roughly to the 1st Sept. 2009.
+
+	\item \verb+edit_rate+ :
+	Defined as the mean edits made per week, since the week of the user's first edit.
+
+	\item \verb+y+ :
+	The target value for the training dataset, defined as the number of edits made
+	by the user during the `next' 20 week block. This column is only present in
+	the training data set.
+\end{itemize}
+
+These particular features were largely chosen by a process of trial and error.
+The variable importance estimates of random forest were also used to gauge
+the relative effectiveness of features during development.
+
+\subsection{Row Masking Strategy for Training Data}
+\label{ssecRowMask}
+
+The training data is constructed using a restricted subset of the users,
+described in more detail below. The test data set used to generate
+the predictions submitted during the competition included all the users.
+
+The only users included in the training set were those whose first observed
+edit from the most recent 52 weeks was made before the most recent 20
+week period, that is, users who `became active' during the most recent 20
+weeks of the year are excluded. This was an attempt to address the sampling
+bias -- we know all users in the data set make at least 1 edit within the year,
+and if they have not made an edit in the first 32 weeks, then they must make
+at least 1 within the last 20 weeks of the year. The edits made by each user
+during this  20 week block is used to define the target response for the
+training dataset. When making predictions on the test dataset using a
+trained model, the same property does not hold, so these users are
+exluded from the training data.
+
+\subsection{Training the Random Forest}
+
+Predictions were made by training a random forest, using
+the randomForest package for R, in regression mode.
+The R script \verb+rf_train.r+ fits a random forest to the
+training data, and saves it to \verb+gen\forest.rdata+. The
+R script \verb+rf_predict.r+ loads the saved random forest,
+and uses it to make predictions on the test data. The predictions
+are then saved to \verb+gen\raw_predictions.csv+. These predictions
+must be post-processed before they are in the correct format, as
+they use the internal indexing scheme for users, instead of the
+original user IDs.
+
+The forests trained typically contain 1200 trees. In general,
+large forests produce better results, but are more tedious to
+train \& consume more memory, so the choice of 1200 trees is a
+compromise. It is quite possible that using a far smaller forest
+containing only e.g. 200 trees could have comparable accuracy,
+see section~\ref{secTreeSize}.
+
+The non-default parameter choices made for the random forest
+were to increase the nodesize from the default, 5, to 100, and
+to disable sampling with replacement. These tweaks were inspired
+by Jeremy Howard's talk ``Getting in Shape for the Sport of
+Data Science'', as covered previously on the Kaggle blog
+\footnote{
+See \url{blog.kaggle.com/2011/03/23/}
+}, and they seemed to improve the accuracy in practice.
+
+The target value given to the random forest during training is $\phi(y)$,
+defined by
+\begin{equation*}
+\phi(y) := \log(1 + y) \;,
+\end{equation*}
+where $\log$ is the natural log and $y$ is the number of edits
+made by each user in the training data set during the most
+recent 20 week block. The transform of $y \mapsto \phi(y)$ is
+applied because random forest aims to minimise a mean squared
+loss in regression mode, i.e.
+\begin{equation*}
+\sum_{i=1}^n \left( y_{\mathrm{target}} - y_{\mathrm{predicted}}\right)^2 \;,
+\end{equation*}
+whereas the objective of the competition was to minimise the (root)
+mean squared logarithmic error, i.e.
+\begin{align*}
+& \sum_{i=1}^n \left( \log(1 + y_{\mathrm{target}}) -
+\log(1 + y_{\mathrm{predicted}})\right)^2 \; \\
+= &
+\sum_{i=1}^n \left( \phi(y_{\mathrm{target}}) - \phi(y_{\mathrm{predicted}})\right)^2 \;.
+\end{align*}
+By applying the $\phi$ transform we can use the standard regression approach
+of the random forest package -- we just have to remember to undo the transformation
+as a post-processing step on any predictions produced, via the inverse map
+$x \mapsto \exp(x) - 1$.
+
+All other parameter settings used the defaults for a regression random forest, or
+were purely used to display diagnostic information.
+
+The implementation made use of the foreach \& doMC packages to train the forests
+in parallel. The code was developed on a machine with two cores, so the forests
+were trained in parallel as two batches of 600 trees, and then combined into a
+single forest.
+
+\subsection{Post-Processing the Predictions}
+
+The python script \verb+fmt_predictions.py+ takes the predicted edit counts stored
+in the file \verb+gen/raw_predictions.csv+, looks up the correct user ID value
+for each user, then writes the final file of predictions to +\verb+gen/predictions.csv+,
+sorted by increasing used ID.
+
+\section{Dependencies}
+The implementation makes use of the following dependencies, which are
+all open source:
+\subsection{Data Processing \& Feature Creation}
+\begin{itemize}
+	\item Python, Python license, \url{python.org}
+	\item NumPy, BSD license, \url{numpy.scipy.org}
+\end{itemize}
+\subsection{Prediction}
+\begin{itemize}
+	\item R, GPL 2, \url{r-project.org}
+	\item randomForest, GPL 2, \url{cran.r-project.org/web/packages/randomForest/}
+	\item foreach, Apache license 2, \url{cran.r-project.org/web/packages/foreach/}
+	\item doMC, GPL 2, \url{cran.r-project.org/web/packages/doMC/}
+\end{itemize}
+The latter two dependencies, foreach \& doMC, are only used to speed up the training of random forests using multiple cores. The essential dependency for prediction is the randomForest package.
+
+\subsection{Build Script}
+\begin{itemize}
+	\item ruby, Ruby license, \url{ruby-lang.org}
+	\item rake, MIT-style license, \url{rake.rubyforge.org}
+\end{itemize}
+This dependency on rake could be removed by rewriting the Rakefile as a Makefile, there isn't anything especially tricky going on in there.
+
+\section{Note: accuracy as a function of forest size}
+\label{secTreeSize}
+
+These random forest out-of-bag MSE estimates, on the training
+data, were computed for our submission with the best public
+score during the competition:
+
+\begin{verbatim}
+     |      Out-of-bag   |
+Tree |      MSE  %Var(y) |
+ 100 |   0.8474    30.78 |
+ 100 |    0.846    30.73 |
+ 200 |   0.8454    30.71 |
+ 200 |   0.8445    30.67 |
+ 300 |   0.8447    30.68 |
+ 300 |   0.8438    30.65 |
+ 400 |   0.8449    30.69 |
+ 400 |   0.8441    30.66 |
+ 500 |   0.8447    30.68 |
+ 500 |    0.844    30.65 |
+ 600 |   0.8446    30.68 |
+ 600 |   0.8438    30.65 |
+\end{verbatim}
+
+These estimates of the MSE suggest that a forest of only 200 trees
+is almost as accurate as the full forest of 1200 trees,
+which might be useful if attempting to apply an approach
+like this in practice, if reducing the computational cost of
+forest construction is more important than raw predictive accuracy.
+
+Note that there are two rows for each tree count as this forest was
+constructed in parallel as two batches of 600 trees.
+
+
+\end{document}

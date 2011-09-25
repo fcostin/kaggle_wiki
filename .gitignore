@@ -7,3 +7,8 @@
 gen/*.csv
 gen/*.rdata
 gen/*.pdf
+
+description.out
+description.aux
+description.log
+description.pdf
