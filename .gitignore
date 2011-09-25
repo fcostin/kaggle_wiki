@@ -8,6 +8,9 @@ gen/*.csv
 gen/*.rdata
 gen/*.pdf
 
+# ignore giant input tsv file
+original_data/training.tsv
+
 description.out
 description.aux
 description.log
