@@ -1,7 +1,14 @@
+"""
+purpose : creates table of weekly edit counts per user
+
+table is saved as numpy array, binary .npy format
+"""
+
 import csv
 import numpy
 import time
 import pickle
+import sys
 
 DAYS_PER_YEAR = 365
 YEAR_ZERO = 2001
@@ -12,15 +19,21 @@ def day_to_week(t):
     return t / 7
 
 def main():
-    usr_to_index = pickle.load(open('data/usr_to_index_map.pickle', 'rb'))
+    if len(sys.argv) != 4:
+        print 'usage: training.tsv usr_to_index_map.pickle output.npy'
+        sys.exit(1)
+    input_tsv_file_name = sys.argv[1]
+    usr_to_index_file_name = sys.argv[2]
+    output_file_name = sys.argv[3]
+
+    usr_to_index = pickle.load(open(usr_to_index_file_name, 'rb'))
     n_usrs = len(usr_to_index)
     x = numpy.zeros((n_usrs, MAX_T + 1), dtype = numpy.uint32)
 
-    input_tsv_file = 'original_data/training.tsv'
     p = 1e5 # spam period
 
     t_week_max = 0
-    with open(input_tsv_file, 'r') as f:
+    with open(input_tsv_file_name, 'r') as f:
         reader = csv.reader(f, delimiter = '\t')
         for i, line in enumerate(reader):
             if i == 0:
@@ -37,7 +50,7 @@ def main():
     x_trim = numpy.zeros((n_usrs, t_week_max + 1), dtype = numpy.uint32)
     x_trim[:, :] = x[:, :(t_week_max + 1)]
     del x
-    numpy.save('data/usr_edits_per_week.npy', x_trim)
+    numpy.save(output_file_name, x_trim)
 
 if __name__ == '__main__':
     main()

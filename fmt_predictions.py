@@ -4,12 +4,12 @@ import csv
 import sys
 
 def main():
-    if len(sys.argv) != 3:
-        print 'usage: raw_predictions.csv predictions.csv'
+    if len(sys.argv) != 4:
+        print 'usage: usr_to_index_map.pickle raw_predictions.csv predictions.csv'
         sys.exit(1)
-    usr_to_index = pickle.load(open('data/usr_to_index_map.pickle', 'rb'))
+    usr_to_index = pickle.load(open(sys.argv[1], 'rb'))
     n_usrs = len(usr_to_index)
-    pred_in = csv.reader(open(sys.argv[1], 'r'))
+    pred_in = csv.reader(open(sys.argv[2], 'r'))
     predicted_counts = []
     for i, row in enumerate(pred_in):
         if i == 0:
@@ -19,7 +19,7 @@ def main():
         predicted_counts.append(count)
     
     print 'saving correctly formatted predictions to "%s"' % sys.argv[2]
-    pred_out = csv.writer(open(sys.argv[2], 'w'), delimiter = ',')
+    pred_out = csv.writer(open(sys.argv[3], 'w'), delimiter = ',')
     header = ['user_id', 'count']
     pred_out.writerow(header)
     sorted_usr_ids = sorted(map(int, usr_to_index.keys()))
