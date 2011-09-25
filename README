@@ -21,3 +21,7 @@ The resulting file of predictions is saved as the file "gen/predictions.csv"
 type "rake doc" to build "doc/description.pdf"
 
 Read the Rakefile to see how the scripts are all glued together...
+
+[TODO]
+1. finish writing the docco
+2. actually test the entire damn thing (urgh!)
