@@ -1,7 +1,7 @@
 # Pipeline for training a random forest from 5 month count data
 # and predicting counts for submission to kaggle.
 #
-# Produces the result "predictions.csv"
+# Produces the result "gen/predictions.csv"
 
 INPUT_WEEKLY_COUNTS = "data/usr_edits_per_week.npy"
 INPUT_WEEKLY_ABS_DELTA = "data/usr_abs_delta_per_week.npy"
@@ -31,23 +31,6 @@ file "gen/test_inputs.csv" => [INPUT_WEEKLY_COUNTS, INPUT_WEEKLY_ABS_DELTA, "mak
 	sh cmd.join(" ")
 end
 
-# compute importance weights to approximately correct
-# for covariate shift between training and test population
-file "gen/importance_weights.csv" => ["cov_shift.r", "gen/training.csv", "gen/test_inputs.csv"] do
-	sh "Rscript cov_shift.r gen/training.csv gen/test_inputs.csv gen/importance_weights.csv"
-end
-
-# Train lasso regression model (use glmnet).
-# This is reweighted by the importance weights.
-file "gen/glmnet.rdata" => ["glmnet_train.r", "gen/training.csv", "gen/importance_weights.csv"] do
-	sh "Rscript glmnet_train.r gen/training.csv gen/importance_weights.csv gen/glmnet.rdata"
-end
-
-# Load lasso regression model from disk, predict on test input data
-file "gen/raw_glmnet_predictions.csv" => ["glmnet_predict.r", "gen/glmnet.rdata", "gen/test_inputs.csv"] do
-	sh "Rscript glmnet_predict.r gen/glmnet.rdata gen/test_inputs.csv gen/raw_glmnet_predictions.csv"
-end
-
 # Train random forest (using multiple cores), then save
 # random forest representation to disk. This part is the
 # most time intensive.
@@ -71,16 +54,9 @@ file "gen/predictions.csv" => ["fmt_predictions.py", "gen/raw_predictions.csv"] 
 	sh "python fmt_predictions.py gen/raw_predictions.csv gen/predictions.csv"
 end
 
-# Format the raw predictions to properly match the format expected by kaggle
-# (i.e. proper user ids in first col, rows sorted wrt user ids, header)
-file "gen/glmnet_predictions.csv" => ["fmt_predictions.py", "gen/raw_glmnet_predictions.csv"] do
-	sh "python fmt_predictions.py gen/raw_glmnet_predictions.csv gen/glmnet_predictions.csv"
-end
-
 task :clean do
 	sh "rm -fv gen/*.csv"
 	sh "rm -fv gen/forest.rdata"
-	sh "rm -fv gen/glmnet.rdata"
 end
 
 task :default => "gen/predictions.csv"
